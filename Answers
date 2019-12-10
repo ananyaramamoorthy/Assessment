@@ -1,9 +1,8 @@
 1. How does your solution handle malformed or corrupt data?
-
-This part of the code checks if the set of expected_account, expected address are in the expected_net set which has all the fields and returns an error if any of the fields are missing.
-It also does a check specifically for the unit_number field, and inserts 'N/A' if it's not provided in the data.
-If the values are corrupt, the database throws it's own exception, for example - the email address field is unique.
-Null checks are not done because it is assumed that the EndPoint will check the json it recieves. Furthermore, not null has been enabled in the database and if a null insert is attempted an error will be thrown.
+	This part of the code checks if the set of expected_account, expected address are in the expected_net set which has all the fields and returns an error if any of the fields are missing.
+	It also does a check specifically for the unit_number field, and inserts 'N/A' if it's not provided in the data.
+	If the values are corrupt, the database throws it's own exception, for example - the email address field is unique.
+	Null checks are not done because it is assumed that the EndPoint will check the json it recieves. Furthermore, not null has been enabled in the database and if a null insert is attempted an error will be thrown.
 
 expected_net = {'event_date', 'account_standing', 'account_id', 'account_information'}
 	expected_account = {'email_address', 'address', 'last_name', 'date_of_birth', 'first_name'}
@@ -18,10 +17,15 @@ expected_net = {'event_date', 'account_standing', 'account_id', 'account_informa
 		unit_no = data['account_information']['address']['unit_number']
 
 2. Is your solution optimized for query latency or throughput?
-   There was not much scope to optimize the queries used in the code as they were very simple inserts and deletes. In this case, since account_id is the primary key and is indexable we don't need to modify the query.
-   These are the principles I folow when I create tables and views that I know will hold large volumes of data:
-   1. 
+   There was not much scope to optimize the queries used in the code as they were very simple inserts and deletes. In this case, since account_id is the primary key and is indexable we don't need to modify the query. One approach could have been to create 3 different tables for account_information, addresses and account_details, but we didn't have a very large dataset. Such an approach would have made sense if we had different methods in our applications that allowed account updates to only address or email.
+   In this approach, we have kept the data centralized in a single table reducing computation load for doing complex joins or foreign keys.
+   These are the principles I follow when I create tables and views that I know will hold large volumes of data:
+   1. create temporary tables which have indices.
+   2. Using well defined foreign keys
+   3. Using inner joins.
+
 3. What would you do differently if the client doesn't send the account_id?
    I would use a set of unique identifiers (dateofbirth, address, email) to validate the record.
+
 4. If the view gets very large, how can we modify it to ensure we're still able to look up examples?
-   By indexing the account_id.
+   By indexing the account_id. And as mentioned above, we would reorganize the data schema.
